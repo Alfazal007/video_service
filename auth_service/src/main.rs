@@ -1,10 +1,15 @@
 use std::env;
 
-use actix_web::{middleware::Logger, web, App, HttpServer};
+use actix_web::{
+    middleware::{from_fn, Logger},
+    web, App, HttpServer,
+};
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
 pub mod datatypes;
+pub mod dbcalls;
 pub mod helpers;
+pub mod middlewares;
 pub mod model;
 pub mod responses;
 pub mod routes;
@@ -45,6 +50,15 @@ async fn main() -> std::io::Result<()> {
                     .route(
                         "/login",
                         web::post().to(crate::routes::user_controllers::login_user::login_user),
+                    )
+                    .service(
+                        web::scope("/protected")
+                            .wrap(from_fn(middlewares::auth_middleware::auth_middleware))
+                            .route(
+                                "/currentUser",
+                                web::get()
+                                    .to(routes::user_controllers::current_user::get_current_user),
+                            ),
                     ),
             )
     })

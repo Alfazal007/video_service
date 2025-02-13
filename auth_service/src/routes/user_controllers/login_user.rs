@@ -20,9 +20,9 @@ struct LoginResponse {
 
 pub async fn login_user(
     data: web::Data<AppState>,
-    sign_up_data: web::Json<SignupData>,
+    sign_in_data: web::Json<SignupData>,
 ) -> impl Responder {
-    if let Err(e) = sign_up_data.validate() {
+    if let Err(e) = sign_in_data.validate() {
         let mut validation_errors: Vec<String> = Vec::new();
         for (_, err) in e.field_errors().iter() {
             if let Some(message) = &err[0].message {
@@ -41,7 +41,7 @@ pub async fn login_user(
 
     let user_from_db_res =
         sqlx::query_as::<_, UserModelWithPassword>("select * from users where username=$1")
-            .bind(&sign_up_data.0.username)
+            .bind(&sign_in_data.0.username)
             .fetch_optional(&data.database)
             .await;
     if user_from_db_res.is_err() {
@@ -57,7 +57,7 @@ pub async fn login_user(
     }
 
     let is_password_ok = verify(
-        &sign_up_data.0.password,
+        &sign_in_data.0.password,
         &user_from_db_res
             .as_ref()
             .unwrap()
@@ -78,7 +78,7 @@ pub async fn login_user(
     }
 
     let token_res = crate::helpers::generate_token::generate_token(
-        &sign_up_data.0.username,
+        &sign_in_data.0.username,
         user_from_db_res.as_ref().unwrap().as_ref().unwrap().id,
         &data.access_secret,
     );
