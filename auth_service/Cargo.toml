@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 actix-web = "4.9.0"
 bcrypt = "0.17.0"
+cloudinary = "0.8.1"
 dotenvy = "0.15.7"
 env_logger = "0.11.6"
 jsonwebtoken = "9.3.1"

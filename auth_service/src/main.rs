@@ -61,6 +61,23 @@ async fn main() -> std::io::Result<()> {
                             ),
                     ),
             )
+            .service(
+                web::scope("/api/v1/video").service(
+                    web::scope("/protected")
+                        .wrap(from_fn(middlewares::auth_middleware::auth_middleware))
+                        .route(
+                            "/newVideo",
+                            web::post().to(
+                                routes::video_controllers::upload_video::upload_video_meta_data,
+                            ),
+                        )
+                        .route(
+                            "/getVideoUploadUrl",
+                            web::get()
+                                .to(routes::video_controllers::get_upload_url::get_upload_url),
+                        ),
+                ),
+            )
     })
     .bind(("127.0.0.1", 8000))?
     .run()
