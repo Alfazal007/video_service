@@ -1,9 +1,18 @@
 use crate::{
-    datatypes::video_metadata::VideoUploadUrl, middlewares::auth_middleware::UserData,
-    model::videos::VideoModel, responses::general_errors::GeneralErrors, AppState,
+    datatypes::video_metadata::VideoUploadUrl,
+    helpers::generate_presigned_url::generate_presigned_url,
+    middlewares::auth_middleware::UserData, model::videos::VideoModel,
+    responses::general_errors::GeneralErrors, AppState,
 };
 use actix_web::{web, HttpMessage, HttpRequest, HttpResponse, Responder};
 use validator::Validate;
+
+#[derive(serde::Serialize)]
+struct UrlResponse {
+    timestamp: u64,
+    signature: String,
+    public_id: String,
+}
 
 pub async fn get_upload_url(
     req: HttpRequest,
@@ -78,6 +87,15 @@ pub async fn get_upload_url(
             errors: "Already uploaded the video".to_string(),
         });
     }
-    //TODO::get the url to upload to cloudinary
-    HttpResponse::Ok().json("hi")
+    let public_id = format!(
+        "{}/{}",
+        user_data.user_id,
+        video_from_db_res.unwrap().unwrap().id
+    );
+    let (signature, timestamp) = generate_presigned_url(&app_state.cloudinary_secret, &public_id);
+    HttpResponse::Ok().json(UrlResponse {
+        signature,
+        timestamp,
+        public_id,
+    })
 }

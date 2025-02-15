@@ -5,7 +5,6 @@ use actix_web::{
     web, App, HttpServer,
 };
 use cloudinary::upload::Upload;
-use helpers::generate_presigned_url::generate_presigned_url;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
 pub mod datatypes;
@@ -20,6 +19,7 @@ pub struct AppState {
     pub database: Pool<Postgres>,
     pub access_secret: String,
     pub cloudinary_config: Arc<Upload>,
+    pub cloudinary_secret: String,
 }
 
 #[actix_web::main]
@@ -38,7 +38,7 @@ async fn main() -> std::io::Result<()> {
     let cloudinary_config = Arc::new(Upload::new(
         cloudinary_api_key,
         cloudinary_cloud_name,
-        cloudinary_api_secret,
+        cloudinary_api_secret.clone(),
     ));
 
     env_logger::Builder::new().parse_filters("info").init();
@@ -56,6 +56,7 @@ async fn main() -> std::io::Result<()> {
                 database: pool.clone(),
                 access_secret: access_token_secret.clone(),
                 cloudinary_config: cloudinary_config.clone(),
+                cloudinary_secret: cloudinary_api_secret.clone(),
             }))
             .service(
                 web::scope("/api/v1/user")
