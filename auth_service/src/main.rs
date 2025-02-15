@@ -5,6 +5,7 @@ use actix_web::{
     web, App, HttpServer,
 };
 use cloudinary::upload::Upload;
+use helpers::generate_presigned_url::generate_presigned_url;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
 pub mod datatypes;

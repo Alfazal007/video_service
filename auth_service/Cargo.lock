@@ -480,8 +480,10 @@ dependencies = [
  "cloudinary",
  "dotenvy",
  "env_logger",
+ "hex",
  "jsonwebtoken",
  "serde",
+ "sha1",
  "sqlx",
  "validator",
 ]

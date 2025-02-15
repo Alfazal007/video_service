@@ -9,7 +9,9 @@ bcrypt = "0.17.0"
 cloudinary = "0.8.1"
 dotenvy = "0.15.7"
 env_logger = "0.11.6"
+hex = "0.4.3"
 jsonwebtoken = "9.3.1"
 serde = {version = "1.0.217", features = ["derive"]}
+sha1 = "0.10.6"
 sqlx = { version = "0.8.3", features = ["postgres", "runtime-async-std-native-tls"] }
 validator = { version = "0.20.0", features = ["derive"] }
