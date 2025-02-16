@@ -5,6 +5,7 @@ use actix_web::{
     web, App, HttpServer,
 };
 use cloudinary::upload::Upload;
+use rdkafka::{producer::FutureProducer, ClientConfig};
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
 pub mod datatypes;
@@ -20,6 +21,8 @@ pub struct AppState {
     pub access_secret: String,
     pub cloudinary_config: Arc<Upload>,
     pub cloudinary_secret: String,
+    pub cloudinary_key: String,
+    pub kafka_producer: FutureProducer,
 }
 
 #[actix_web::main]
@@ -34,9 +37,10 @@ async fn main() -> std::io::Result<()> {
         env::var("CLOUDINARY_API_KEY").expect("Cloudinary api key not provided in the env");
     let cloudinary_api_secret =
         env::var("CLOUDINARY_API_SECRET").expect("Cloudinary api secret not provided in the env");
+    let kafka_url = env::var("KAFKA_URL").expect("Kafka url not provided in the env");
 
     let cloudinary_config = Arc::new(Upload::new(
-        cloudinary_api_key,
+        cloudinary_api_key.clone(),
         cloudinary_cloud_name,
         cloudinary_api_secret.clone(),
     ));
@@ -49,6 +53,11 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("Issue connecting to the database");
 
+    let kafka_producer: FutureProducer = ClientConfig::new()
+        .set("bootstrap.servers", kafka_url)
+        .create()
+        .expect("Producer creation failed");
+
     HttpServer::new(move || {
         App::new()
             .wrap(Logger::default())
@@ -57,6 +66,8 @@ async fn main() -> std::io::Result<()> {
                 access_secret: access_token_secret.clone(),
                 cloudinary_config: cloudinary_config.clone(),
                 cloudinary_secret: cloudinary_api_secret.clone(),
+                cloudinary_key: cloudinary_api_key.clone(),
+                kafka_producer: kafka_producer.clone(),
             }))
             .service(
                 web::scope("/api/v1/user")
@@ -92,6 +103,11 @@ async fn main() -> std::io::Result<()> {
                             "/getVideoUploadUrl",
                             web::get()
                                 .to(routes::video_controllers::get_upload_url::get_upload_url),
+                        )
+                        .route(
+                            "/transcode",
+                            web::post()
+                                .to(routes::video_controllers::start_transcode::start_transcode),
                         ),
                 ),
             )
