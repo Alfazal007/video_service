@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import axios from "axios";
+import { downloadVideo } from "./downloadVideo";
 
 const prisma = new PrismaClient();
 
@@ -32,7 +33,6 @@ export async function transcodeVideo(videoId: number, credentials: string): Prom
                 }
             });
         }
-
 
         const publicId = `${video.creator_id}/${video.id}`;
         const cloudinaryResponse = await axios.get(`https://api.cloudinary.com/v1_1/itachinftvr/resources/video/upload/${publicId}`,
@@ -80,7 +80,11 @@ export async function transcodeVideo(videoId: number, credentials: string): Prom
             targets.push({ width: 640, height: 360 });
         }
         console.log({ targets });
-        // download the video from cloudinary
+        const downloadResponse = await downloadVideo(publicId);
+        if (!downloadResponse) {
+            return false;
+        }
+        console.log({ downloadResponse })
         // transcode the video
         // upload it back to cloudinary
         // commit to kafka
