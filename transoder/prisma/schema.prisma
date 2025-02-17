@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum video_status {
+  novideo
+  transcoding
+  published
+  unlist
+}
+
+model users {
+  id       Int     @id @default(autoincrement())
+  username String  @unique
+  password String
+  videos   videos[]
+}
+
+model videos {
+  id         Int         @id @default(autoincrement())
+  creator    users       @relation(fields: [creator_id], references: [id], onDelete: Cascade)
+  creator_id  Int
+  title      String
+  status     video_status @default(novideo)
+  final_url   String      @default("")
+}
+
