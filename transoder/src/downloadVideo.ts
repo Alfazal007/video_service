@@ -21,7 +21,7 @@ function deleteFilesInFolder(): boolean {
             const filePath = path.join(folderPath, file);
             // Delete each file synchronously
             fs.unlinkSync(filePath);
-            console.log(`Deleted file: ${filePath}`);
+            console.log(`Deleted file: ${filePath} `);
         });
         console.log("All files deleted.");
         return true;

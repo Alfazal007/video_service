@@ -3,6 +3,7 @@ import { Kafka } from "kafkajs";
 import { transcodeVideo } from "./transcode";
 import { configDotenv } from "dotenv";
 import base64 from "base-64";
+import { v2 as cloudinary } from "cloudinary";
 
 configDotenv();
 
@@ -17,6 +18,12 @@ const password = process.env.CLOUDINARY_API_SECRET as string;
 const credentials = base64.encode(`${username}:${password}`);
 
 const consumer = kafka.consumer({ groupId: 'my-group' });
+
+export const cloudinaryConfig = cloudinary.config({
+    cloud_name: 'itachinftvr',
+    api_key: username,
+    api_secret: password
+});
 
 const main = async () => {
     const res = await transcodeVideo(1, credentials);

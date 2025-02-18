@@ -18,6 +18,8 @@
     "@types/node": "^22.13.4",
     "axios": "^1.7.9",
     "base-64": "^1.0.0",
+    "child_process": "^1.0.2",
+    "cloudinary": "^2.5.1",
     "dotenv": "^16.4.7",
     "kafkajs": "^2.2.4",
     "path": "^0.12.7",

@@ -1,1 +1,1 @@
-{"root":["./src/downloadVideo.ts","./src/index.ts","./src/transcode.ts"],"version":"5.7.3"}
+{"root":["./src/commads.ts","./src/downloadVideo.ts","./src/index.ts","./src/transcode.ts"],"version":"5.7.3"}
