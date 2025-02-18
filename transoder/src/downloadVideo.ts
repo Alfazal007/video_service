@@ -1,27 +1,22 @@
 import fs from 'fs';
 import path from 'path';
+import { getAllFilePaths } from './cloudinary';
 
-export async function downloadVideo(public_id: string): Promise<boolean> {
-    const videoUrl = `https://res.cloudinary.com/itachinftvr/video/upload/${public_id}`;
-    const filePath = `videosFFMPEG/new_video.mp4`;
-    const deleteSuccess = deleteFilesInFolder();
+export async function downloadVideo(): Promise<boolean> {
+    const deleteSuccess = await deleteFilesInFolder();
     if (!deleteSuccess) {
         return false;
     }
-    // run the following here
-    // sudo docker run --rm -v /home/itachi/Downloads/project/youtube/transoder/videosFFMPEG:/mnt jrottenberg/ffmpeg -i "https://res.cloudinary.com/itachinftvr/video/upload/<public_id>" /mnt/video_output.avi
     return true;
 }
 
-function deleteFilesInFolder(): boolean {
+async function deleteFilesInFolder(): Promise<boolean> {
     const folderPath = path.join(__dirname, "../videosFFMPEG/");
+    const files = await getAllFilePaths(folderPath);
     try {
-        const files = fs.readdirSync(folderPath);
         files.forEach((file) => {
-            const filePath = path.join(folderPath, file);
-            // Delete each file synchronously
-            fs.unlinkSync(filePath);
-            console.log(`Deleted file: ${filePath} `);
+            fs.unlinkSync(file);
+            console.log(`Deleted file: ${file} `);
         });
         console.log("All files deleted.");
         return true;

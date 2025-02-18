@@ -4,6 +4,7 @@ import { transcodeVideo } from "./transcode";
 import { configDotenv } from "dotenv";
 import base64 from "base-64";
 import { v2 as cloudinary } from "cloudinary";
+import { createCloudinaryData } from "./cloudinary";
 
 configDotenv();
 
@@ -19,36 +20,32 @@ const credentials = base64.encode(`${username}:${password}`);
 
 const consumer = kafka.consumer({ groupId: 'my-group' });
 
-export const cloudinaryConfig = cloudinary.config({
-    cloud_name: 'itachinftvr',
-    api_key: username,
-    api_secret: password
-});
-
 const main = async () => {
-    const res = await transcodeVideo(1, credentials);
-    console.log({ res });
-    /*
-        await consumer.connect();
-        await consumer.subscribe({ topic: 'transcode', fromBeginning: false });
-    
-        await consumer.run({
-            eachMessage: async ({ topic, partition, message }) => {
-                try {
-                    const value = message.value?.toString();
-                    if (value) {
-                        let videoId = parseInt(value);
-                        transcodeVideo(videoId);
-                    }
-                    await consumer.commitOffsets([
-                        { topic, partition, offset: (BigInt(message.offset) + BigInt(1)).toString() }
-                    ]);
-                } catch (err) {
-                    console.log("Some issue with handling the message ", err);
+
+    //const res1 = await createCloudinaryData(1, 1)
+    //console.log({ res1 })
+    await consumer.connect();
+    await consumer.subscribe({ topic: 'transcode', fromBeginning: false });
+
+    await consumer.run({
+        eachMessage: async ({ topic, partition, message }) => {
+            try {
+                const value = message.value?.toString();
+                console.log("a value came in");
+                if (value) {
+                    let videoId = parseInt(value);
+                    let r = await transcodeVideo(videoId, credentials);
+                    // TODO:: UPdate database with final url and handfle true and false cases and solve some kafka errors
                 }
-            },
-        });
-    */
+                await consumer.commitOffsets([
+                    { topic, partition, offset: (BigInt(message.offset) + BigInt(1)).toString() }
+                ]);
+            } catch (err) {
+                console.log("Some issue with handling the message ", err);
+            }
+        },
+    });
+
 };
 
 main()

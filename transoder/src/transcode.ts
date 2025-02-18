@@ -4,6 +4,8 @@ import { downloadVideo } from "./downloadVideo";
 import { commandReturner } from "./commads";
 import { exec } from "child_process";
 import { v2 as cloudinary } from "cloudinary";
+import { createCloudinaryData } from "./cloudinary";
+import util from "util";
 
 const prisma = new PrismaClient();
 
@@ -73,7 +75,7 @@ export async function transcodeVideo(videoId: number, credentials: string): Prom
             videoQuality = Quality.v360;
         }
 
-        const downloadResponse = await downloadVideo(publicId);
+        const downloadResponse = await downloadVideo();
         if (!downloadResponse) {
             return false;
         }
@@ -87,20 +89,15 @@ export async function transcodeVideo(videoId: number, credentials: string): Prom
         let finalCommandToRun = commandReturner(url, videoQuality);
         console.log({ finalCommandToRun });
 
-        exec(finalCommandToRun, (error, stdout, stderr) => {
-            if (error) {
-                console.error(`Error: ${error.message}`);
-                return false;
-            }
-            if (stderr) {
-                console.error(`FFmpeg stderr: ${stderr}`);
-                return false;
-            }
-            console.log(`FFmpeg output: ${stdout}`);
-        });
+        const execPromise = util.promisify(exec);
+        await execPromise(finalCommandToRun);
+        const res = await createCloudinaryData(video.creator_id, videoId);
+        if (!res) {
+            return false;
+        }
+        return true;
     } catch (err) {
         // dont commit to kafka as there was an issue so try again later
         return false;
     }
-    return true;
 }
