@@ -74,21 +74,18 @@ export async function transcodeVideo(videoId: number, credentials: string): Prom
         } else {
             videoQuality = Quality.v360;
         }
-        console.log({ videoQuality });
 
         const downloadResponse = await downloadVideo();
         if (!downloadResponse) {
             return [false, "", false];
         }
 
-        console.log({ downloadResponse })
         let url = cloudinary.url(publicId, {
             resource_type: 'video',
             sign_url: true
         });
 
         let finalCommandToRun = commandReturner(url, videoQuality);
-        console.log({ finalCommandToRun });
 
         const execPromise = util.promisify(exec);
         await execPromise(finalCommandToRun);

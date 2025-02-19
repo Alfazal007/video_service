@@ -28,7 +28,7 @@ const main = async () => {
         eachMessage: async ({ heartbeat, topic, partition, message }) => {
             try {
                 const value = message.value?.toString();
-                console.log("a value came in");
+                console.log("New request");
                 if (value) {
                     let videoId = parseInt(value);
                     heartbeatInterval = setInterval(async () => {
