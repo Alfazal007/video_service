@@ -1,10 +1,8 @@
-import { transcode } from "buffer";
 import { Kafka } from "kafkajs";
 import { transcodeVideo } from "./transcode";
 import { configDotenv } from "dotenv";
 import base64 from "base-64";
-import { v2 as cloudinary } from "cloudinary";
-import { createCloudinaryData } from "./cloudinary";
+import { PrismaClient } from "@prisma/client";
 
 configDotenv();
 
@@ -16,36 +14,59 @@ const kafka = new Kafka({
 const username = process.env.CLOUDINARY_API_KEY as string;
 const password = process.env.CLOUDINARY_API_SECRET as string;
 
+const prisma = new PrismaClient();
+
 const credentials = base64.encode(`${username}:${password}`);
 
 const consumer = kafka.consumer({ groupId: 'my-group' });
 
 const main = async () => {
-
-    //const res1 = await createCloudinaryData(1, 1)
-    //console.log({ res1 })
     await consumer.connect();
     await consumer.subscribe({ topic: 'transcode', fromBeginning: false });
-
+    let heartbeatInterval: any;
     await consumer.run({
-        eachMessage: async ({ topic, partition, message }) => {
+        eachMessage: async ({ heartbeat, topic, partition, message }) => {
             try {
                 const value = message.value?.toString();
                 console.log("a value came in");
                 if (value) {
                     let videoId = parseInt(value);
-                    let r = await transcodeVideo(videoId, credentials);
-                    // TODO:: UPdate database with final url and handfle true and false cases and solve some kafka errors
+                    heartbeatInterval = setInterval(async () => {
+                        try {
+                            await heartbeat();
+                            console.log(`Heartbeat sent for video ID: ${videoId}`);
+                        } catch (err) {
+                            console.warn("Failed to send heartbeat:", err);
+                        }
+                    }, 5000);
+                    let [statusOfFFMPEG, creatorId, is360] = await transcodeVideo(videoId, credentials);
+                    if (!statusOfFFMPEG) {
+                        return;
+                    }
+                    if (creatorId) {
+                        const publicKeyOfMaster = is360 ? `${creatorId}/${videoId}/stream/master.m3u8`
+                            : `${creatorId}/${videoId}/master.m3u8`;
+                        await prisma.videos.update({
+                            where: {
+                                id: videoId
+                            },
+                            data: {
+                                final_url: publicKeyOfMaster,
+                                status: "published"
+                            }
+                        })
+                    }
                 }
                 await consumer.commitOffsets([
                     { topic, partition, offset: (BigInt(message.offset) + BigInt(1)).toString() }
                 ]);
             } catch (err) {
                 console.log("Some issue with handling the message ", err);
+            } finally {
+                clearInterval(heartbeatInterval);
             }
         },
     });
-
 };
 
 main()

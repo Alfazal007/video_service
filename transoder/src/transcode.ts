@@ -16,7 +16,7 @@ export enum Quality {
     "v360"
 }
 
-export async function transcodeVideo(videoId: number, credentials: string): Promise<boolean> {
+export async function transcodeVideo(videoId: number, credentials: string): Promise<[boolean, string, boolean]> {
     cloudinary.config({
         cloud_name: 'itachinftvr',
         api_key: process.env.CLOUDINARY_API_KEY as string,
@@ -31,7 +31,7 @@ export async function transcodeVideo(videoId: number, credentials: string): Prom
             }
         });
         if (!video) {
-            return true;
+            return [true, "", false];
         }
         if (video.status != "transcoding") {
             await prisma.videos.update({
@@ -58,7 +58,7 @@ export async function transcodeVideo(videoId: number, credentials: string): Prom
         const height = cloudinaryResponse.data.height;
         if (!width || !height) {
             // probably deleted or improper video, commit to kafka
-            return true;
+            return [true, "", false];
         }
 
         if (width == 640 && height == 360) {
@@ -74,10 +74,11 @@ export async function transcodeVideo(videoId: number, credentials: string): Prom
         } else {
             videoQuality = Quality.v360;
         }
+        console.log({ videoQuality });
 
         const downloadResponse = await downloadVideo();
         if (!downloadResponse) {
-            return false;
+            return [false, "", false];
         }
 
         console.log({ downloadResponse })
@@ -93,11 +94,11 @@ export async function transcodeVideo(videoId: number, credentials: string): Prom
         await execPromise(finalCommandToRun);
         const res = await createCloudinaryData(video.creator_id, videoId);
         if (!res) {
-            return false;
+            return [false, "", false];
         }
-        return true;
+        return [true, video.creator_id.toString(), videoQuality == Quality.v360];
     } catch (err) {
         // dont commit to kafka as there was an issue so try again later
-        return false;
+        return [false, "", false];
     }
 }
