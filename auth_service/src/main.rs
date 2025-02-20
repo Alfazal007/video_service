@@ -1,12 +1,16 @@
-use std::{env, sync::Arc};
+use std::{env, sync::Arc, time::Duration};
 
 use actix_web::{
     middleware::{from_fn, Logger},
     web, App, HttpServer,
 };
 use cloudinary::upload::Upload;
-use rdkafka::{producer::FutureProducer, ClientConfig};
+use rdkafka::{
+    producer::{FutureProducer, Producer},
+    ClientConfig,
+};
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
+use tokio::sync::Mutex;
 
 pub mod datatypes;
 pub mod dbcalls;
@@ -22,7 +26,7 @@ pub struct AppState {
     pub cloudinary_config: Arc<Upload>,
     pub cloudinary_secret: String,
     pub cloudinary_key: String,
-    pub kafka_producer: FutureProducer,
+    pub kafka_producer: Arc<Mutex<FutureProducer>>,
 }
 
 #[actix_web::main]
@@ -55,8 +59,11 @@ async fn main() -> std::io::Result<()> {
 
     let kafka_producer: FutureProducer = ClientConfig::new()
         .set("bootstrap.servers", kafka_url)
+        .set("transactional.id", &access_token_secret)
         .create()
         .expect("Producer creation failed");
+
+    let _ = kafka_producer.init_transactions(Duration::from_secs(5));
 
     HttpServer::new(move || {
         App::new()
@@ -67,7 +74,7 @@ async fn main() -> std::io::Result<()> {
                 cloudinary_config: cloudinary_config.clone(),
                 cloudinary_secret: cloudinary_api_secret.clone(),
                 cloudinary_key: cloudinary_api_key.clone(),
-                kafka_producer: kafka_producer.clone(),
+                kafka_producer: Arc::new(Mutex::new(kafka_producer.clone())),
             }))
             .service(
                 web::scope("/api/v1/user")

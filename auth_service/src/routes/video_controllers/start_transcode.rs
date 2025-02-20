@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use actix_web::{web, HttpMessage, HttpRequest, HttpResponse, Responder};
-use rdkafka::producer::FutureRecord;
+use rdkafka::producer::{FutureProducer, FutureRecord, Producer};
 use validator::Validate;
 
 use crate::{
@@ -75,13 +75,15 @@ pub async fn start_transcode(
         });
     }
 
-    if video_from_db_res.as_ref().unwrap().as_ref().unwrap().status != VideoStatus::NoVideo {
+    if video_from_db_res.as_ref().unwrap().as_ref().unwrap().status != VideoStatus::NoVideo
+        && video_from_db_res.as_ref().unwrap().as_ref().unwrap().status != VideoStatus::Transcoding
+    {
         return HttpResponse::BadRequest().json(GeneralErrors {
             errors: "Video is already being processed or has completed processing".to_string(),
         });
     }
 
-    let video_uploaded = check_resource_exists(
+    let (video_uploaded, greater_than_360) = check_resource_exists(
         &app_state.cloudinary_key,
         &app_state.cloudinary_secret,
         &format!(
@@ -97,24 +99,63 @@ pub async fn start_transcode(
             errors: "Video not uploaded yet".to_string(),
         });
     }
+
     let user_id = user_data.user_id;
     let video_id = video_from_db_res.as_ref().unwrap().as_ref().unwrap().id;
+    {
+        let producer = &app_state.kafka_producer.lock().await;
 
-    let kafka_res = app_state
-        .kafka_producer
-        .send(
-            FutureRecord::to("transcode")
-                .key(&format!("{}", &user_id))
-                .payload(&format!("{}", &video_id)),
-            Duration::from_secs(3),
+        let kafka_res =
+            publish_to_topics_transactionally(producer, user_id, video_id, greater_than_360).await;
+
+        if kafka_res.is_err() {
+            return HttpResponse::InternalServerError().json(GeneralErrors {
+                errors: "Kafka is down, try again later".to_string(),
+            });
+        }
+    }
+    HttpResponse::Ok().json("Your video has been added to the queue to transode")
+}
+
+async fn publish_to_topics_transactionally(
+    producer: &FutureProducer,
+    user_id: i32,
+    video_id: i32,
+    greater_than_360: bool,
+) -> Result<(), rdkafka::error::KafkaError> {
+    producer.begin_transaction()?;
+
+    let user_id_str = format!("{}", user_id);
+    let video_id_str = format!("{}", video_id);
+
+    let mut publish_attempts = vec![producer.send(
+        FutureRecord::to("transcode_normal")
+            .key(&user_id_str)
+            .payload(&video_id_str),
+        Duration::from_secs(2),
+    )];
+
+    if greater_than_360 {
+        publish_attempts.push(
+            producer.send(
+                FutureRecord::to("transcode_480")
+                    .key(&user_id_str)
+                    .payload(&video_id_str),
+                Duration::from_secs(2),
+            ),
         )
-        .await;
-
-    if kafka_res.is_err() {
-        return HttpResponse::InternalServerError().json(GeneralErrors {
-            errors: "Kafka is down, try again later".to_string(),
-        });
     }
 
-    HttpResponse::Ok().json("Your video has been added to the queue to transode")
+    for attempt in publish_attempts {
+        match attempt.await {
+            Ok(_) => continue,
+            Err(e) => {
+                producer.abort_transaction(Duration::from_secs(2))?;
+                return Err(e.0);
+            }
+        }
+    }
+
+    producer.commit_transaction(Duration::from_secs(2))?;
+    Ok(())
 }

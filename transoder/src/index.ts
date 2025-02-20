@@ -44,8 +44,8 @@ const main = async () => {
                         return;
                     }
                     if (creatorId) {
-                        const publicKeyOfMaster = is360 ? `${creatorId}/${videoId}/stream/master.m3u8`
-                            : `${creatorId}/${videoId}/master.m3u8`;
+                        const publicKeyOfMaster =
+                            `${creatorId}/${videoId}/master.m3u8`;
                         await prisma.videos.update({
                             where: {
                                 id: videoId

@@ -80,7 +80,6 @@ export function commandReturner(videoUrl: string, quality: Quality): string {
 
     else {
         return `cd ${folderToRun} && \
-                mkdir stream && \
                 ffmpeg -i "${videoUrl}" \
                 -filter_complex \
                     "[0:v]scale=w=640:h=360[vout]" \
@@ -91,9 +90,9 @@ export function commandReturner(videoUrl: string, quality: Quality): string {
                 -hls_playlist_type vod \
                 -hls_flags independent_segments \
                 -hls_segment_type mpegts \
-                -hls_segment_filename stream/data%03d.ts \
+                -hls_segment_filename stream_%v/data%03d.ts \
                 -master_pl_name master.m3u8 \
                 -var_stream_map "v:0,a:0" \
-                stream/playlist.m3u8`
+                stream_%v/playlist.m3u8`
     }
 }
