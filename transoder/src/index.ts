@@ -39,7 +39,7 @@ const main = async () => {
                             console.warn("Failed to send heartbeat:", err);
                         }
                     }, 5000);
-                    let [statusOfFFMPEG, creatorId, is360] = await transcodeVideo(videoId, credentials);
+                    let [statusOfFFMPEG, creatorId] = await transcodeVideo(videoId, credentials);
                     if (!statusOfFFMPEG) {
                         return;
                     }
