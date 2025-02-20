@@ -22,7 +22,7 @@ const consumer = kafka.consumer({ groupId: 'my-group' });
 
 const main = async () => {
     await consumer.connect();
-    await consumer.subscribe({ topic: 'transcode', fromBeginning: false });
+    await consumer.subscribe({ topic: 'transcode_normal', fromBeginning: false });
     let heartbeatInterval: any;
     await consumer.run({
         eachMessage: async ({ heartbeat, topic, partition, message }) => {

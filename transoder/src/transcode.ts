@@ -12,7 +12,6 @@ const prisma = new PrismaClient();
 export enum Quality {
     "v1080",
     "v720",
-    "v480",
     "v360"
 }
 
@@ -63,8 +62,6 @@ export async function transcodeVideo(videoId: number, credentials: string): Prom
 
         if (width == 640 && height == 360) {
             videoQuality = Quality.v360;
-        } else if (width == 854 && height == 480) {
-            videoQuality = Quality.v480;
         } else if (width == 1280 && height == 720) {
             videoQuality = Quality.v720;
         } else if (width == 1920 && height == 1080) {
