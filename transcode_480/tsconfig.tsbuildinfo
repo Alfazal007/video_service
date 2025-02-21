@@ -1,1 +1,1 @@
-{"root":["./src/index.ts"],"version":"5.7.3"}
+{"root":["./src/cloudinary.ts","./src/downloadVideo.ts","./src/index.ts","./src/new_commands.ts","./src/prisma.ts","./src/transcode.ts","./src/updateDB.ts"],"version":"5.7.3"}

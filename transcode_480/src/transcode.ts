@@ -67,6 +67,7 @@ export async function transcodeVideo(videoId: number, credentials: string): Prom
 
         const execPromise = util.promisify(exec);
         await execPromise(finalCommandToRun);
+
         const res = await createCloudinaryData(video.creator_id, videoId);
         if (!res) {
             return [false, ""];

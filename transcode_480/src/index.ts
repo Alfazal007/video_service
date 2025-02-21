@@ -18,7 +18,7 @@ const password = process.env.CLOUDINARY_API_SECRET as string;
 
 const credentials = base64.encode(`${username}:${password}`);
 
-const consumer = kafka.consumer({ groupId: 'my-group' });
+const consumer = kafka.consumer({ groupId: 'my-group-1' });
 
 const main = async () => {
     await consumer.connect();
@@ -41,6 +41,7 @@ const main = async () => {
                     }, 5000);
 
                     let [canCommitToKafka, creatorId] = await transcodeVideo(videoId, credentials);
+
                     if (!canCommitToKafka) {
                         return;
                     }
