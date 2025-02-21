@@ -5,5 +5,7 @@ create table videos (
     creator_id int not null references users(id) on delete cascade,
 	title varchar(250) not null,
     status video_status NOT NULL DEFAULT 'novideo',
-    final_url varchar(250) default ''
+    final_url varchar(250) default '',
+    normal_done boolean default false,
+    foureighty_done boolean default false
 );

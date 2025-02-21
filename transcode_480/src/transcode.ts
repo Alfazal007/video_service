@@ -7,13 +7,6 @@ import { createCloudinaryData } from "./cloudinary";
 import util from "util";
 import { prisma } from "./prisma";
 
-export enum Quality {
-    "v1080",
-    "v720",
-    "v480",
-    "v360"
-}
-
 export async function transcodeVideo(videoId: number, credentials: string): Promise<[boolean, string]> {
     cloudinary.config({
         cloud_name: 'itachinftvr',
@@ -21,7 +14,6 @@ export async function transcodeVideo(videoId: number, credentials: string): Prom
         api_secret: process.env.CLOUDINARY_API_SECRET as string
     });
 
-    let videoQuality: Quality;
     try {
         const video = await prisma.videos.findFirst({
             where: {
@@ -31,6 +23,7 @@ export async function transcodeVideo(videoId: number, credentials: string): Prom
         if (!video) {
             return [true, ""];
         }
+
         if (video.status != "transcoding") {
             await prisma.videos.update({
                 where: {
@@ -43,7 +36,7 @@ export async function transcodeVideo(videoId: number, credentials: string): Prom
         }
 
         const publicId = `${video.creator_id}/${video.id}`;
-        let videoUrl = `https://api.cloudinary.com/v1_1/itachinftvr/resources/video/upload/${publicId}`
+        let videoUrl = `https://api.cloudinary.com/v1_1/itachinftvr/resources/video/upload/${publicId}`;
         const cloudinaryResponse = await axios.get(videoUrl,
             {
                 headers: {
@@ -60,20 +53,6 @@ export async function transcodeVideo(videoId: number, credentials: string): Prom
             return [true, ""];
         }
 
-        if (width == 640 && height == 360) {
-            videoQuality = Quality.v360;
-        } else if (width == 854 && height == 480) {
-            videoQuality = Quality.v480;
-        } else if (width == 1280 && height == 720) {
-            videoQuality = Quality.v720;
-        } else if (width == 1920 && height == 1080) {
-            videoQuality = Quality.v1080;
-        } else if (width > 1920 && height > 1080) {
-            videoQuality = Quality.v1080;
-        } else {
-            videoQuality = Quality.v360;
-        }
-
         const downloadResponse = await deleteExistingFiles();
         if (!downloadResponse) {
             return [false, ""];
@@ -84,7 +63,7 @@ export async function transcodeVideo(videoId: number, credentials: string): Prom
             sign_url: true
         });
 
-        let finalCommandToRun = commandReturner(url, videoQuality);
+        let finalCommandToRun = commandReturner(url);
 
         const execPromise = util.promisify(exec);
         await execPromise(finalCommandToRun);

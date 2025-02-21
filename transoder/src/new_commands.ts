@@ -50,6 +50,25 @@ export function commandReturner(videoUrl: string, quality: Quality): string {
             -var_stream_map "v:0,a:0 v:1,a:1" \
             stream_%v/playlist.m3u8`
     }
+
+    else if (quality == Quality.v480) {
+        return `cd ${folderToRun} && \
+                ffmpeg -i "${videoUrl}" \
+                -filter_complex \
+                    "[0:v]scale=w=640:h=360[vout]" \
+                -map "[vout]" -c:v libx264 -b:v 800k -maxrate 856k -bufsize 1200k \
+                -map a:0 -c:a aac -b:a 64k -ac 2 \
+                -f hls \
+                -hls_time 5 \
+                -hls_playlist_type vod \
+                -hls_flags independent_segments \
+                -hls_segment_type mpegts \
+                -hls_segment_filename stream_%v/data%03d.ts \
+                -master_pl_name master.m3u8 \
+                -var_stream_map "v:0,a:0" \
+                stream_%v/playlist.m3u8`
+    }
+
     else {
         return `cd ${folderToRun} && \
                 ffmpeg -i "${videoUrl}" \

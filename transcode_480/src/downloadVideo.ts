@@ -35,4 +35,3 @@ async function deleteFilesInFolder(folderPath: string): Promise<boolean> {
         return false;
     }
 }
-

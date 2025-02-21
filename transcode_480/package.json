@@ -1,0 +1,29 @@
+{
+  "name": "transcode_480",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "tsc -b && node dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/base-64": "^1.0.2",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "@prisma/client": "6.4.1",
+    "@types/node": "^22.13.4",
+    "axios": "^1.7.9",
+    "base-64": "^1.0.0",
+    "child_process": "^1.0.2",
+    "cloudinary": "^2.5.1",
+    "dotenv": "^16.4.7",
+    "kafkajs": "^2.2.4",
+    "path": "^0.12.7",
+    "prisma": "^6.4.1",
+    "util": "^0.12.5"
+  }
+}
