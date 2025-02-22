@@ -4,6 +4,8 @@ import { configDotenv } from "dotenv";
 import base64 from "base-64";
 import { updateDBAndTellIfNeedToUpdateMaster } from "./updateDB";
 import { updateMasterCloudinary } from "./updateMasterCloudinary";
+import { updateMasterCloudinaryFOUREIGHTY } from "./updateFourEightyCloudinary";
+import { create } from "domain";
 
 configDotenv();
 
@@ -56,6 +58,13 @@ const main = async () => {
                         if (updateMaster) {
                             console.log("Inside update of master file");
                             let masterFileUpdateResult = await updateMasterCloudinary(videoQuality, publicKeyOfMaster);
+                            if (!masterFileUpdateResult) {
+                                return;
+                            }
+                        } else {
+                            console.log("here")
+                            let publicKeyTemp = `${creatorId}/${videoId}/temp.m3u8`
+                            let masterFileUpdateResult = await updateMasterCloudinaryFOUREIGHTY(videoQuality, publicKeyTemp);
                             if (!masterFileUpdateResult) {
                                 return;
                             }

@@ -1,0 +1,32 @@
+import { masterFileData } from "./master_files";
+import { Quality } from "./transcode";
+import { v2 as cloudinary } from "cloudinary";
+
+export async function updateMasterCloudinaryFOUREIGHTY(videoQuality: Quality, publicKeyOfMaster: string): Promise<boolean> {
+    cloudinary.config({
+        cloud_name: 'itachinftvr',
+        api_key: process.env.CLOUDINARY_API_KEY as string,
+        api_secret: process.env.CLOUDINARY_API_SECRET as string
+    });
+    try {
+        if (videoQuality == Quality.v360) {
+            return true;
+        }
+
+        const newContent = `#EXTM3U
+#EXT-X-VERSION:6
+#EXT-X-STREAM-INF:BANDWIDTH=1498000,RESOLUTION=854x480,CODECS="avc1.64001f,mp4a.40.2"
+stream_480p/playlist.m3u8`;
+        const dataUri = `data:text/plain;base64,${Buffer.from(newContent).toString('base64')}`;
+        await cloudinary.uploader.upload(dataUri, {
+            public_id: publicKeyOfMaster,
+            resource_type: 'raw',
+            overwrite: true
+        });
+
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
