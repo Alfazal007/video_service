@@ -7,14 +7,16 @@ import { createCloudinaryData } from "./cloudinary";
 import util from "util";
 import { prisma } from "./prisma";
 
+
 export enum Quality {
     "v1080",
     "v720",
     "v480",
-    "v360"
+    "v360",
+    "failed"
 }
 
-export async function transcodeVideo(videoId: number, credentials: string): Promise<[boolean, string]> {
+export async function transcodeVideo(videoId: number, credentials: string): Promise<[boolean, string, Quality]> {
     cloudinary.config({
         cloud_name: 'itachinftvr',
         api_key: process.env.CLOUDINARY_API_KEY as string,
@@ -29,7 +31,7 @@ export async function transcodeVideo(videoId: number, credentials: string): Prom
             }
         });
         if (!video) {
-            return [true, ""];
+            return [true, "", Quality.failed];
         }
         if (video.status != "transcoding") {
             await prisma.videos.update({
@@ -57,7 +59,7 @@ export async function transcodeVideo(videoId: number, credentials: string): Prom
         const height = cloudinaryResponse.data.height;
         if (!width || !height) {
             // probably deleted or improper video, commit to kafka
-            return [true, ""];
+            return [true, "", Quality.failed];
         }
 
         if (width == 640 && height == 360) {
@@ -76,12 +78,13 @@ export async function transcodeVideo(videoId: number, credentials: string): Prom
 
         const downloadResponse = await deleteExistingFiles();
         if (!downloadResponse) {
-            return [false, ""];
+            return [false, "", Quality.failed];
         }
 
         let url = cloudinary.url(publicId, {
             resource_type: 'video',
-            sign_url: true
+            sign_url: true,
+            force_version: false
         });
 
         let finalCommandToRun = commandReturner(url, videoQuality);
@@ -90,11 +93,11 @@ export async function transcodeVideo(videoId: number, credentials: string): Prom
         await execPromise(finalCommandToRun);
         const res = await createCloudinaryData(video.creator_id, videoId);
         if (!res) {
-            return [false, ""];
+            return [false, "", Quality.failed];
         }
-        return [true, video.creator_id.toString()];
+        return [true, video.creator_id.toString(), videoQuality];
     } catch (err) {
         // dont commit to kafka as there was an issue so try again later
-        return [false, ""];
+        return [false, "", Quality.failed];
     }
 }

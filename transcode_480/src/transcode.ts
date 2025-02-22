@@ -7,12 +7,22 @@ import { createCloudinaryData } from "./cloudinary";
 import util from "util";
 import { prisma } from "./prisma";
 
-export async function transcodeVideo(videoId: number, credentials: string): Promise<[boolean, string]> {
+
+export enum Quality {
+    "v1080",
+    "v720",
+    "v480",
+    "v360",
+    "failed"
+}
+
+export async function transcodeVideo(videoId: number, credentials: string): Promise<[boolean, string, Quality]> {
     cloudinary.config({
         cloud_name: 'itachinftvr',
         api_key: process.env.CLOUDINARY_API_KEY as string,
         api_secret: process.env.CLOUDINARY_API_SECRET as string
     });
+    let videoQuality: Quality;
 
     try {
         const video = await prisma.videos.findFirst({
@@ -21,7 +31,7 @@ export async function transcodeVideo(videoId: number, credentials: string): Prom
             }
         });
         if (!video) {
-            return [true, ""];
+            return [true, "", Quality.failed];
         }
 
         if (video.status != "transcoding") {
@@ -50,17 +60,32 @@ export async function transcodeVideo(videoId: number, credentials: string): Prom
         const height = cloudinaryResponse.data.height;
         if (!width || !height) {
             // probably deleted or improper video, commit to kafka
-            return [true, ""];
+            return [true, "", Quality.failed];
+        }
+
+        if (width == 640 && height == 360) {
+            videoQuality = Quality.v360;
+        } else if (width == 854 && height == 480) {
+            videoQuality = Quality.v480;
+        } else if (width == 1280 && height == 720) {
+            videoQuality = Quality.v720;
+        } else if (width == 1920 && height == 1080) {
+            videoQuality = Quality.v1080;
+        } else if (width > 1920 && height > 1080) {
+            videoQuality = Quality.v1080;
+        } else {
+            videoQuality = Quality.v360;
         }
 
         const downloadResponse = await deleteExistingFiles();
         if (!downloadResponse) {
-            return [false, ""];
+            return [false, "", Quality.failed];
         }
 
         let url = cloudinary.url(publicId, {
             resource_type: 'video',
-            sign_url: true
+            sign_url: true,
+            force_version: false
         });
 
         let finalCommandToRun = commandReturner(url);
@@ -70,11 +95,11 @@ export async function transcodeVideo(videoId: number, credentials: string): Prom
 
         const res = await createCloudinaryData(video.creator_id, videoId);
         if (!res) {
-            return [false, ""];
+            return [false, "", Quality.failed];
         }
-        return [true, video.creator_id.toString()];
+        return [true, video.creator_id.toString(), videoQuality];
     } catch (err) {
         // dont commit to kafka as there was an issue so try again later
-        return [false, ""];
+        return [false, "", Quality.failed];
     }
 }

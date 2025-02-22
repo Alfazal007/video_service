@@ -19,7 +19,7 @@ const uploadToCloudinary = (buffer: Buffer, userId: number, path: string, fileNa
                 overwrite: true,
                 resource_type: "raw",
                 folder: `/${userId}/${projectId}/${updatedFolder}`,
-                public_id: `${fileName}`
+                public_id: `${fileName}`,
             },
             (error, result) => {
                 if (error) reject(error);

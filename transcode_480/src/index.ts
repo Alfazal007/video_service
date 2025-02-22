@@ -2,8 +2,8 @@ import { Kafka } from "kafkajs";
 import { transcodeVideo } from "./transcode";
 import { configDotenv } from "dotenv";
 import base64 from "base-64";
-import { prisma } from "./prisma";
 import { updateDBAndTellIfNeedToUpdateMaster } from "./updateDB";
+import { updateMasterCloudinary } from "./updateMasterCloudinary";
 
 configDotenv();
 
@@ -40,7 +40,7 @@ const main = async () => {
                         }
                     }, 5000);
 
-                    let [canCommitToKafka, creatorId] = await transcodeVideo(videoId, credentials);
+                    let [canCommitToKafka, creatorId, videoQuality] = await transcodeVideo(videoId, credentials);
 
                     if (!canCommitToKafka) {
                         return;
@@ -55,10 +55,14 @@ const main = async () => {
                         }
                         if (updateMaster) {
                             console.log("Inside update of master file");
-                            // TODO:: Write a function to update the master file m3u8
+                            let masterFileUpdateResult = await updateMasterCloudinary(videoQuality, publicKeyOfMaster);
+                            if (!masterFileUpdateResult) {
+                                return;
+                            }
                         }
                     }
                 }
+
                 await consumer.commitOffsets([
                     { topic, partition, offset: (BigInt(message.offset) + BigInt(1)).toString() }
                 ]);

@@ -3,6 +3,7 @@ import { transcodeVideo } from "./transcode";
 import { configDotenv } from "dotenv";
 import base64 from "base-64";
 import { updateDBAndTellIfNeedToUpdateMaster } from "./updateDB";
+import { updateMasterCloudinary } from "./updateMasterFileCloudinary";
 
 configDotenv();
 
@@ -38,7 +39,7 @@ const main = async () => {
                             console.warn("Failed to send heartbeat:", err);
                         }
                     }, 5000);
-                    let [statusOfFFMPEG, creatorId] = await transcodeVideo(videoId, credentials);
+                    let [statusOfFFMPEG, creatorId, videoQuality] = await transcodeVideo(videoId, credentials);
                     if (!statusOfFFMPEG) {
                         return;
                     }
@@ -51,8 +52,11 @@ const main = async () => {
                             return;
                         }
                         if (updateMaster) {
-                            console.log("Inside update of master file");
-                            // TODO:: Write a function to update the master file m3u8
+                            console.log("Update of master file");
+                            let masterFileUpdateResult = await updateMasterCloudinary(videoQuality, publicKeyOfMaster);
+                            if (!masterFileUpdateResult) {
+                                return;
+                            }
                         }
                     }
                 }
