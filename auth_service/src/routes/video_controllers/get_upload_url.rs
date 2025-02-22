@@ -75,23 +75,30 @@ pub async fn get_upload_url(
         });
     }
 
-    if !video_from_db_res
+    if video_from_db_res
         .as_ref()
         .unwrap()
         .as_ref()
         .unwrap()
-        .final_url
-        .is_empty()
+        .normal_done
+        || video_from_db_res
+            .as_ref()
+            .unwrap()
+            .as_ref()
+            .unwrap()
+            .foureighty_done
     {
         return HttpResponse::BadRequest().json(GeneralErrors {
             errors: "Already uploaded the video".to_string(),
         });
     }
+
     let public_id = format!(
         "{}/{}",
         user_data.user_id,
         video_from_db_res.unwrap().unwrap().id
     );
+
     let (signature, timestamp) = generate_presigned_url(&app_state.cloudinary_secret, &public_id);
     HttpResponse::Ok().json(UrlResponse {
         signature,

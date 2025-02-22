@@ -1,4 +1,4 @@
-import { Kafka } from "kafkajs";
+import { Consumer, Kafka } from "kafkajs";
 import { transcodeVideo } from "./transcode";
 import { configDotenv } from "dotenv";
 import base64 from "base-64";
@@ -27,10 +27,10 @@ const main = async () => {
     await consumer.subscribe({ topic: 'transcode_480', fromBeginning: false });
     let heartbeatInterval: any;
     await consumer.run({
+        autoCommit: false,
         eachMessage: async ({ heartbeat, topic, partition, message }) => {
             try {
                 const value = message.value?.toString();
-                console.log("New request");
                 if (value) {
                     let videoId = parseInt(value);
                     heartbeatInterval = setInterval(async () => {
@@ -39,12 +39,14 @@ const main = async () => {
                             console.log(`Heartbeat sent for video ID: ${videoId}`);
                         } catch (err) {
                             console.warn("Failed to send heartbeat:", err);
+                            return;
                         }
                     }, 5000);
 
                     let [canCommitToKafka, creatorId, videoQuality] = await transcodeVideo(videoId, credentials);
 
                     if (!canCommitToKafka) {
+                        await retryMessage(consumer, topic, partition, message.offset);
                         return;
                     }
 
@@ -53,19 +55,22 @@ const main = async () => {
                             `${creatorId}/${videoId}/master.m3u8`;
                         let [commitToKafka, updateMaster] = await updateDBAndTellIfNeedToUpdateMaster(videoId, publicKeyOfMaster);
                         if (!commitToKafka) {
+                            await retryMessage(consumer, topic, partition, message.offset);
                             return;
                         }
+
                         if (updateMaster) {
                             console.log("Inside update of master file");
                             let masterFileUpdateResult = await updateMasterCloudinary(videoQuality, publicKeyOfMaster);
                             if (!masterFileUpdateResult) {
+                                await retryMessage(consumer, topic, partition, message.offset);
                                 return;
                             }
                         } else {
-                            console.log("here")
                             let publicKeyTemp = `${creatorId}/${videoId}/temp.m3u8`
                             let masterFileUpdateResult = await updateMasterCloudinaryFOUREIGHTY(videoQuality, publicKeyTemp);
                             if (!masterFileUpdateResult) {
+                                await retryMessage(consumer, topic, partition, message.offset);
                                 return;
                             }
                         }
@@ -77,11 +82,23 @@ const main = async () => {
                 ]);
             } catch (err) {
                 console.log("Some issue with handling the message ", err);
+                await retryMessage(consumer, topic, partition, message.offset);
             } finally {
-                clearInterval(heartbeatInterval);
+                if (heartbeatInterval) clearInterval(heartbeatInterval);
             }
         },
     });
 };
 
 main()
+
+async function retryMessage(consumer: Consumer, topic: string, partition: number, offset: string) {
+    console.warn(`Retrying message at offset ${offset} in 5s...`);
+    await delay(2000);
+
+    consumer.pause([{ topic, partitions: [partition] }]);
+    consumer.seek({ topic, partition, offset });
+    setImmediate(() => consumer.resume([{ topic, partitions: [partition] }]));
+}
+
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));

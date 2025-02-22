@@ -7,7 +7,6 @@ export async function updateDBAndTellIfNeedToUpdateMaster(videoId: number, publi
                 id: videoId
             },
             data: {
-                final_url: publicKeyOfMaster,
                 status: "published",
                 foureighty_done: true
             }

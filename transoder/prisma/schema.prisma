@@ -27,7 +27,6 @@ model videos {
   creator_id  Int
   title      String
   status     video_status @default(novideo)
-  final_url   String      @default("")
   normal_done Boolean @default(false)
   foureighty_done Boolean @default(false)
 }

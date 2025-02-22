@@ -84,8 +84,10 @@ export async function transcodeVideo(videoId: number, credentials: string): Prom
         let url = cloudinary.url(publicId, {
             resource_type: 'video',
             sign_url: true,
-            force_version: false
+            //            force_version: true,
+            version: "500"
         });
+        console.log({ url })
 
         let finalCommandToRun = commandReturner(url, videoQuality);
 
