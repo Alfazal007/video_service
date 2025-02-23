@@ -1,20 +1,14 @@
-use crate::{
-    datatypes::video_metadata::VideoUploadUrl,
-    helpers::generate_presigned_url::generate_presigned_url,
-    middlewares::auth_middleware::UserData, model::videos::VideoModel,
-    responses::general_errors::GeneralErrors, AppState,
-};
 use actix_web::{web, HttpMessage, HttpRequest, HttpResponse, Responder};
 use validator::Validate;
 
-#[derive(serde::Serialize)]
-pub struct UrlResponse {
-    pub timestamp: u64,
-    pub signature: String,
-    pub public_id: String,
-}
+use crate::{
+    datatypes::video_metadata::VideoUploadUrl, helpers, middlewares::auth_middleware::UserData,
+    model::videos::VideoModel, responses::general_errors::GeneralErrors, AppState,
+};
 
-pub async fn get_upload_url(
+use super::get_upload_url::UrlResponse;
+
+pub async fn thumbnail_upload(
     req: HttpRequest,
     app_state: web::Data<AppState>,
     video_info: web::Json<VideoUploadUrl>,
@@ -45,10 +39,12 @@ pub async fn get_upload_url(
     let extensions = req.extensions();
     let user_data = extensions.get::<UserData>().unwrap();
 
-    let video_from_db_res = sqlx::query_as::<_, VideoModel>("select * from videos where id=$1")
-        .bind(video_info.0.video_id)
-        .fetch_optional(&app_state.database)
-        .await;
+    let video_from_db_res =
+        sqlx::query_as::<_, VideoModel>("select * from videos where id=$1 and creator_id=$2")
+            .bind(video_info.0.video_id)
+            .bind(user_data.user_id)
+            .fetch_optional(&app_state.database)
+            .await;
 
     if video_from_db_res.is_err() {
         return HttpResponse::InternalServerError().json(GeneralErrors {
@@ -62,47 +58,15 @@ pub async fn get_upload_url(
         });
     }
 
-    if video_from_db_res
-        .as_ref()
-        .unwrap()
-        .as_ref()
-        .unwrap()
-        .creator_id
-        != user_data.user_id
-    {
-        return HttpResponse::Forbidden().json(GeneralErrors {
-            errors: "You are not the creator of this video".to_string(),
-        });
-    }
-
-    if video_from_db_res
-        .as_ref()
-        .unwrap()
-        .as_ref()
-        .unwrap()
-        .normal_done
-        || video_from_db_res
-            .as_ref()
-            .unwrap()
-            .as_ref()
-            .unwrap()
-            .foureighty_done
-    {
-        return HttpResponse::BadRequest().json(GeneralErrors {
-            errors: "Already uploaded the video".to_string(),
-        });
-    }
-
-    let public_id = format!(
-        "{}/{}",
-        user_data.user_id,
-        video_from_db_res.unwrap().unwrap().id
+    let public_id = format!("{}/thumbnail/{}", user_data.user_id, video_info.0.video_id);
+    let (thumbnail_upload_url, timestamp) = helpers::generate_presigned_url::generate_presigned_url(
+        &app_state.cloudinary_secret,
+        &public_id,
     );
 
-    let (signature, timestamp) = generate_presigned_url(&app_state.cloudinary_secret, &public_id);
     HttpResponse::Ok().json(UrlResponse {
-        signature,
         timestamp,
+        signature: thumbnail_upload_url,
         public_id,
     })
 }

@@ -108,13 +108,18 @@ async fn main() -> std::io::Result<()> {
                         )
                         .route(
                             "/getVideoUploadUrl",
-                            web::get()
+                            web::post()
                                 .to(routes::video_controllers::get_upload_url::get_upload_url),
                         )
                         .route(
                             "/transcode",
                             web::post()
                                 .to(routes::video_controllers::start_transcode::start_transcode),
+                        )
+                        .route(
+                            "/thumbnail",
+                            web::post()
+                                .to(routes::video_controllers::thumbnail_upload::thumbnail_upload),
                         ),
                 ),
             )
