@@ -135,6 +135,15 @@ async fn publish_to_topics_transactionally(
         Duration::from_secs(2),
     )];
 
+    publish_attempts.push(
+        producer.send(
+            FutureRecord::to("elastic_search")
+                .key(&user_id_str)
+                .payload(&video_id_str),
+            Duration::from_secs(2),
+        ),
+    );
+
     if greater_than_360 {
         publish_attempts.push(
             producer.send(
