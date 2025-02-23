@@ -1,0 +1,74 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      base-64:
+        specifier: ^1.0.0
+        version: 1.0.0
+      dotenv:
+        specifier: ^16.4.7
+        version: 16.4.7
+      kafkajs:
+        specifier: ^2.2.4
+        version: 2.2.4
+      typescript:
+        specifier: ^5.7.3
+        version: 5.7.3
+    devDependencies:
+      '@types/base-64':
+        specifier: ^1.0.2
+        version: 1.0.2
+      '@types/node':
+        specifier: ^22.13.5
+        version: 22.13.5
+
+packages:
+
+  '@types/base-64@1.0.2':
+    resolution: {integrity: sha512-uPgKMmM9fmn7I+Zi6YBqctOye4SlJsHKcisjHIMWpb2YKZRc36GpKyNuQ03JcT+oNXg1m7Uv4wU94EVltn8/cw==}
+
+  '@types/node@22.13.5':
+    resolution: {integrity: sha512-+lTU0PxZXn0Dr1NBtC7Y8cR21AJr87dLLU953CWA6pMxxv/UDc7jYAY90upcrie1nRcD6XNG5HOYEDtgW5TxAg==}
+
+  base-64@1.0.0:
+    resolution: {integrity: sha512-kwDPIFCGx0NZHog36dj+tHiwP4QMzsZ3AgMViUBKI0+V5n4U0ufTCUMhnQ04diaRI8EX/QcPfql7zlhZ7j4zgg==}
+
+  dotenv@16.4.7:
+    resolution: {integrity: sha512-47qPchRCykZC03FhkYAhrvwU4xDBFIj1QPqaarj6mdM/hgUzfPHcpkHJOn3mJAufFeeAxAzeGsr5X0M4k6fLZQ==}
+    engines: {node: '>=12'}
+
+  kafkajs@2.2.4:
+    resolution: {integrity: sha512-j/YeapB1vfPT2iOIUn/vxdyKEuhuY2PxMBvf5JWux6iSaukAccrMtXEY/Lb7OvavDhOWME589bpLrEdnVHjfjA==}
+    engines: {node: '>=14.0.0'}
+
+  typescript@5.7.3:
+    resolution: {integrity: sha512-84MVSjMEHP+FQRPy3pX9sTVV/INIex71s9TL2Gm5FG/WG1SqXeKyZ0k7/blY/4FdOzI12CBy1vGc4og/eus0fw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
+  undici-types@6.20.0:
+    resolution: {integrity: sha512-Ny6QZ2Nju20vw1SRHe3d9jVu6gJ+4e3+MMpqu7pqE5HT6WsTSlce++GQmK5UXS8mzV8DSYHrQH+Xrf2jVcuKNg==}
+
+snapshots:
+
+  '@types/base-64@1.0.2': {}
+
+  '@types/node@22.13.5':
+    dependencies:
+      undici-types: 6.20.0
+
+  base-64@1.0.0: {}
+
+  dotenv@16.4.7: {}
+
+  kafkajs@2.2.4: {}
+
+  typescript@5.7.3: {}
+
+  undici-types@6.20.0: {}
