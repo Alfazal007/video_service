@@ -21,6 +21,9 @@ export async function createMapping() {
                                     type: "text"
                                 }
                             }
+                        },
+                        created_at: {
+                            type: "date"
                         }
                     }
                 }
