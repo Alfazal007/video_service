@@ -6,5 +6,6 @@ create table videos (
 	title varchar(250) not null,
     status video_status NOT NULL DEFAULT 'novideo',
     normal_done boolean default false,
-    foureighty_done boolean default false
+    foureighty_done boolean default false,
+    created_at TIMESTAMP DEFAULT NOW()
 );

@@ -31,4 +31,3 @@ model videos {
   foureighty_done Boolean @default(false)
   created_at DateTime    @default(now())
 }
-

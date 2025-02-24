@@ -1,6 +1,7 @@
 import { Consumer, Kafka } from "kafkajs";
 import { configDotenv } from "dotenv";
 import { indexToElasticSearch } from "./indexToElasticSearch";
+import { createMapping } from "./helpers/mapping";
 
 configDotenv();
 
@@ -53,7 +54,9 @@ const main = async () => {
     });
 };
 
-main()
+// main()
+createMapping()
+
 
 async function retryMessage(consumer: Consumer, topic: string, partition: number, offset: string) {
     console.warn(`Retrying message at offset ${offset} in 5s...`);
