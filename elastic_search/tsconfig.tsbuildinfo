@@ -1,1 +1,1 @@
-{"root":["./src/index.ts","./src/indexToElasticSearch.ts"],"version":"5.7.3"}
+{"root":["./src/index.ts","./src/indexToElasticSearch.ts","./src/helpers/elastic_search.ts","./src/helpers/mapping.ts","./src/helpers/prisma.ts"],"version":"5.7.3"}

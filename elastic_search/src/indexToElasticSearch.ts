@@ -13,7 +13,16 @@ export async function indexToElasticSearch(videoId: number): Promise<boolean> {
             return true;
         }
         const elasticSearchClient = await ElasticSearchCustom.getInstance();
-        // TODO:: Index into the elastic search
+
+        elasticSearchClient.index({
+            index: "videos",
+            document: {
+                id: video.id,
+                creator_id: video.creator_id,
+                title: video.title,
+                created_at: video.created_at
+            }
+        })
         return true;
     } catch (err) {
         return false;

@@ -4,7 +4,7 @@ export async function createMapping() {
     const client = await ElasticSearchCustom.getInstance();
     try {
         const videosIndex = await client.indices.create({
-            index: "movies",
+            index: "videos",
             body: {
                 mappings: {
                     properties: {

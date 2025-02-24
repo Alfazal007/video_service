@@ -1,7 +1,6 @@
 import { Consumer, Kafka } from "kafkajs";
 import { configDotenv } from "dotenv";
 import { indexToElasticSearch } from "./indexToElasticSearch";
-import { createMapping } from "./helpers/mapping";
 
 configDotenv();
 
@@ -17,46 +16,54 @@ const main = async () => {
     await consumer.subscribe({ topic: 'elastic_search', fromBeginning: false });
     let heartbeatInterval: any;
     await consumer.run({
-        autoCommit: false,
-        eachMessage: async ({ heartbeat, topic, partition, message }) => {
-            try {
+        eachBatchAutoResolve: false,
+        eachBatch: async ({ batch, resolveOffset, heartbeat, isRunning, isStale }) => {
+            const topic = batch.topic;
+            const partition = batch.partition;
+
+            for (const message of batch.messages) {
+                if (!isRunning() || isStale()) break;
+                console.log({ message })
                 const value = message.value?.toString();
                 if (value) {
                     let videoId = parseInt(value);
 
-                    heartbeatInterval = setInterval(async () => {
-                        try {
-                            await heartbeat();
-                            console.log(`Heartbeat sent for video ID: ${videoId}`);
-                        } catch (err) {
-                            console.warn("Failed to send heartbeat:", err);
+                    try {
+                        heartbeatInterval = setInterval(async () => {
+                            try {
+                                await heartbeat();
+                                console.log(`Heartbeat sent for video ID: ${videoId}`);
+                            } catch (err) {
+                                console.warn("Failed to send heartbeat:", err);
+                                return;
+                            }
+                        }, 5000);
+
+                        /*                        let indexIntoElasticSearch = await indexToElasticSearch(videoId);
+                        if (!indexIntoElasticSearch) {
+                            await retryMessage(consumer, topic, partition, message.offset);
                             return;
                         }
-                    }, 5000);
-
-                    let indexIntoElasticSearch = await indexToElasticSearch(videoId);
-                    if (!indexIntoElasticSearch) {
-                        await retryMessage(consumer, topic, partition, message.offset);
-                        return;
+*/
+                        await consumer.commitOffsets([
+                            { topic, partition, offset: (BigInt(message.offset) + BigInt(1)).toString() }
+                        ]);
                     }
-
-                    await consumer.commitOffsets([
-                        { topic, partition, offset: (BigInt(message.offset) + BigInt(1)).toString() }
-                    ]);
+                    catch (err) { }
+                    finally {
+                        if (heartbeatInterval) {
+                            clearInterval(heartbeatInterval);
+                        }
+                    }
+                    resolveOffset(message.offset);
                 }
-            } catch (err) {
-                console.log("Some issue with handling the message ", err);
-                await retryMessage(consumer, topic, partition, message.offset);
-            } finally {
-                if (heartbeatInterval) clearInterval(heartbeatInterval);
             }
         },
     });
 };
 
-// main()
-createMapping()
-
+main()
+//createMapping()
 
 async function retryMessage(consumer: Consumer, topic: string, partition: number, offset: string) {
     console.warn(`Retrying message at offset ${offset} in 5s...`);
