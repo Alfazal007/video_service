@@ -16,11 +16,6 @@ export async function createMapping() {
                         },
                         title: {
                             type: "search_as_you_type",
-                            fields: {
-                                "fuzzy": {
-                                    type: "text"
-                                }
-                            }
                         },
                         created_at: {
                             type: "date"
