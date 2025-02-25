@@ -123,6 +123,12 @@ async fn main() -> std::io::Result<()> {
                         ),
                 ),
             )
+            .service(web::scope("/api/v1/search").route(
+                "/searchbar/{search_item}",
+                web::get().to(
+                    routes::elasticsearch_controllers::search_bar_controller::search_bar_controller,
+                ),
+            ))
     })
     .bind(("127.0.0.1", 8000))?
     .run()
