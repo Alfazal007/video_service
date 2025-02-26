@@ -1,6 +1,7 @@
 import { Consumer, Kafka } from "kafkajs";
 import { configDotenv } from "dotenv";
 import { indexToElasticSearch } from "./indexToElasticSearch";
+import { createMapping } from "./helpers/mapping";
 
 configDotenv();
 

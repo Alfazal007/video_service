@@ -3,7 +3,7 @@ import fs from "fs"
 import path from "path"
 
 export async function elasticClient() {
-    const certPath = path.join(__dirname, "../../certer.crt") // this file is from docker
+    const certPath = path.join(__dirname, "../../certer.crt")
     const client = new Client({
         node: 'https://127.0.0.1:9200',
         auth: {

@@ -1,16 +1,27 @@
-use std::{env, sync::Arc, time::Duration};
+use std::{
+    env,
+    fs::{self},
+    sync::Arc,
+    time::Duration,
+};
 
 use actix_web::{
     middleware::{from_fn, Logger},
     web, App, HttpServer,
 };
 use cloudinary::upload::Upload;
+use elasticsearch::{
+    cert::Certificate,
+    http::transport::{SingleNodeConnectionPool, TransportBuilder},
+    Elasticsearch,
+};
 use rdkafka::{
     producer::{FutureProducer, Producer},
     ClientConfig,
 };
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use tokio::sync::Mutex;
+use url::Url;
 
 pub mod datatypes;
 pub mod dbcalls;
@@ -27,6 +38,8 @@ pub struct AppState {
     pub cloudinary_secret: String,
     pub cloudinary_key: String,
     pub kafka_producer: Arc<Mutex<FutureProducer>>,
+    pub elastic_search: Elasticsearch,
+    pub credentials: String,
 }
 
 #[actix_web::main]
@@ -42,6 +55,30 @@ async fn main() -> std::io::Result<()> {
     let cloudinary_api_secret =
         env::var("CLOUDINARY_API_SECRET").expect("Cloudinary api secret not provided in the env");
     let kafka_url = env::var("KAFKA_URL").expect("Kafka url not provided in the env");
+    let elastic_search_url =
+        env::var("ELASTIC_SEARCH_URL").expect("Elastic search url not provided");
+    let elastic_search_username =
+        env::var("ELASTIC_SEARCH_USERNAME").expect("Elastic search username not provided");
+    let elastic_search_password =
+        env::var("ELASTIC_SEARCH_PASSWORD").expect("Elastic search password not provided");
+
+    let elastic_search_creds = format!("{}:{}", elastic_search_username, elastic_search_password);
+
+    let parsed_elastic_search_url =
+        Url::parse(&elastic_search_url).expect("Invalid elastic search url");
+
+    let conn_pool = SingleNodeConnectionPool::new(parsed_elastic_search_url);
+
+    let cert_data = fs::read("./certer.crt").expect("Issue reading the certificate file");
+
+    let transport = TransportBuilder::new(conn_pool)
+        .cert_validation(elasticsearch::cert::CertificateValidation::Certificate(
+            Certificate::from_pem(&cert_data).expect("Some error with the certificate"),
+        ))
+        .disable_proxy()
+        .build()
+        .expect("Issue setting up transporter for elastic search");
+    let elastic_search_client = Elasticsearch::new(transport);
 
     let cloudinary_config = Arc::new(Upload::new(
         cloudinary_api_key.clone(),
@@ -75,6 +112,8 @@ async fn main() -> std::io::Result<()> {
                 cloudinary_secret: cloudinary_api_secret.clone(),
                 cloudinary_key: cloudinary_api_key.clone(),
                 kafka_producer: Arc::new(Mutex::new(kafka_producer.clone())),
+                elastic_search: elastic_search_client.clone(),
+                credentials: elastic_search_creds.clone(),
             }))
             .service(
                 web::scope("/api/v1/user")

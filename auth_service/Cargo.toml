@@ -9,6 +9,7 @@ base64 = "0.22.1"
 bcrypt = "0.17.0"
 cloudinary = "0.8.1"
 dotenvy = "0.15.7"
+elasticsearch = "8.17.0-alpha.1"
 env_logger = "0.11.6"
 hex = "0.4.3"
 jsonwebtoken = "9.3.1"
@@ -19,4 +20,5 @@ serde_json = "1.0.139"
 sha1 = "0.10.6"
 sqlx = { version = "0.8.3", features = ["postgres", "runtime-async-std-native-tls"] }
 tokio = "1.43.0"
+url = "2.5.4"
 validator = { version = "0.20.0", features = ["derive"] }
