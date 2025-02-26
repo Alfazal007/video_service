@@ -167,7 +167,10 @@ async fn main() -> std::io::Result<()> {
                 web::get().to(
                     routes::elasticsearch_controllers::search_bar_controller::search_bar_controller,
                 ),
-            ))
+            ).route("/searchlist/{search_item}", web::get().to(
+                    routes::elasticsearch_controllers::search_list::search_list_controller,
+                ))
+            )
     })
     .bind(("127.0.0.1", 8000))?
     .run()

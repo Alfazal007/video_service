@@ -5,7 +5,14 @@ use elasticsearch::SearchParts;
 use reqwest::header::{HeaderValue, AUTHORIZATION};
 use serde_json::Value;
 
-pub async fn search_bar_controller(
+#[derive(serde::Serialize)]
+struct SearchItems {
+    video_id: i64,
+    creator_id: i64,
+    title: String,
+}
+
+pub async fn search_list_controller(
     app_state: web::Data<AppState>,
     path: web::Path<String>,
 ) -> impl Responder {
@@ -18,8 +25,9 @@ pub async fn search_bar_controller(
         "query": {
             "multi_match": {
                 "query": search_text,
-                "type": "bool_prefix",
-                "fields": ["title", "title._2gram", "title._3gram"]
+                "type": "best_fields",
+                "fields": ["title", "title.fuzzy"],
+                "fuzziness": "AUTO"
             }
         }
     });
@@ -40,19 +48,27 @@ pub async fn search_bar_controller(
     }
 
     let response_body: serde_json::Value = response.unwrap().json().await.unwrap();
-    let mut list_of_string = Vec::new();
+    let mut res_list = Vec::new();
 
     if let Some(hits) = response_body["hits"]["hits"].as_array() {
         for hit in hits {
             if let Some(source) = hit["_source"].as_object() {
-                let _ = source.get("id").and_then(Value::as_i64).unwrap_or_default();
+                let creator_id = source
+                    .get("creator_id")
+                    .and_then(Value::as_i64)
+                    .unwrap_or_default();
+                let video_id = source.get("id").and_then(Value::as_i64).unwrap_or_default();
                 let title = source
                     .get("title")
                     .and_then(Value::as_str)
                     .unwrap_or("Unknown Title");
-                list_of_string.push(title);
+                res_list.push(SearchItems {
+                    video_id,
+                    title: title.to_string(),
+                    creator_id,
+                });
             }
         }
     }
-    HttpResponse::Ok().json(list_of_string)
+    HttpResponse::Ok().json(res_list)
 }

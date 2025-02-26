@@ -67,18 +67,6 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 
 /*  QUERY  FOR SEARCH AS YOU TYPE
-{
-    "query": {
-            "multi_match": {
-                "query": "first",
-                "type": "bool_prefix",
-                "fields": ["title", "title._2gram", "title._3gram"]
-            }
-        }
-}
-
-
-QUERY for fuzzy search
 
 {
     "query": {
