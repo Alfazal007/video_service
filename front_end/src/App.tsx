@@ -32,4 +32,6 @@ function App() {
     )
 }
 
+// TODO:: Add search, watch-video, create-video-metadata and get video url, upload-video, start-transcoding, get-thumbnail, upload-thumbnail
+
 export default App
