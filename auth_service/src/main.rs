@@ -5,7 +5,9 @@ use std::{
     time::Duration,
 };
 
+use actix_cors::Cors;
 use actix_web::{
+    http,
     middleware::{from_fn, Logger},
     web, App, HttpServer,
 };
@@ -101,9 +103,20 @@ async fn main() -> std::io::Result<()> {
         .expect("Producer creation failed");
 
     let _ = kafka_producer.init_transactions(Duration::from_secs(5));
-
     HttpServer::new(move || {
+        let cors = Cors::default()
+            .allowed_origin("http://localhost:5173")
+            .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+            .allowed_headers(vec![
+                http::header::CONTENT_TYPE,
+                http::header::AUTHORIZATION,
+            ])
+            .allow_any_header()
+            .supports_credentials()
+            .max_age(3600);
+
         App::new()
+            .wrap(cors)
             .wrap(Logger::default())
             .app_data(web::Data::new(AppState {
                 database: pool.clone(),
