@@ -172,7 +172,7 @@ async fn main() -> std::io::Result<()> {
                             "/thumbnail",
                             web::post()
                                 .to(routes::video_controllers::thumbnail_upload::thumbnail_upload),
-                        ),
+                        )
                 ),
             )
             .service(web::scope("/api/v1/search").route(
@@ -184,6 +184,10 @@ async fn main() -> std::io::Result<()> {
                     routes::elasticsearch_controllers::search_list::search_list_controller,
                 ))
             )
+            .service(web::scope("/api/v1/viewVideo").route(
+                            "/{creator_id}/{video_id}",
+                            web::get().to(routes::video_controllers::get_video::get_video)
+            ))
     })
     .bind(("127.0.0.1", 8000))?
     .run()

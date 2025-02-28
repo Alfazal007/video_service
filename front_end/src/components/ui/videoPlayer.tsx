@@ -1,15 +1,17 @@
 import { useRef, useEffect } from "react";
 import videojs from "video.js";
 import "video.js/dist/video-js.css";
+import 'jb-videojs-hls-quality-selector';
 
 export const VideoPlayer = ({ videoLink }: { videoLink: string }) => {
-    const videoRef = useRef(null);
-    const playerRef = useRef(null);
+    const videoRef = useRef<HTMLDivElement>(null);
+    const playerRef = useRef<any>(null);
 
     const options = {
         controls: true,
         responsive: true,
         fluid: true,
+        autoplay: false,
         sources: [
             {
                 src: videoLink,
@@ -21,7 +23,9 @@ export const VideoPlayer = ({ videoLink }: { videoLink: string }) => {
     // @ts-ignore
     const onReady = (player) => {
         playerRef.current = player;
-        // You can handle player events here, for example:
+        player.hlsQualitySelector({
+            displayCurrentQuality: true,
+        });
         player.on("waiting", () => {
             videojs.log("player is waiting");
         });
@@ -31,9 +35,7 @@ export const VideoPlayer = ({ videoLink }: { videoLink: string }) => {
     };
 
     useEffect(() => {
-        // Make sure Video.js player is only initialized once
         if (!playerRef.current) {
-            // The Video.js player needs to be _inside_ the component el for React 18 Strict Mode.
             const videoElement = document.createElement("video-js");
 
             videoElement.classList.add("vjs-big-play-centered");
@@ -44,8 +46,6 @@ export const VideoPlayer = ({ videoLink }: { videoLink: string }) => {
                 onReady && onReady(player);
             }));
 
-            // You could update an existing player in the `else` block here
-            // on prop change, for example:
         } else {
             const player = playerRef.current;
 
@@ -54,7 +54,7 @@ export const VideoPlayer = ({ videoLink }: { videoLink: string }) => {
         }
     }, [options, videoRef]);
 
-    // Dispose the Video.js player when the functional component unmounts
+
     useEffect(() => {
         const player = playerRef.current;
 
@@ -78,3 +78,4 @@ export const VideoPlayer = ({ videoLink }: { videoLink: string }) => {
 };
 
 export default VideoPlayer;
+
