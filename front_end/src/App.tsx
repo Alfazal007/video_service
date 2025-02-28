@@ -8,6 +8,7 @@ import SignInPage from './components/signin'
 import SignUpPage from './components/signup'
 import UserProvider from './context/UserContext'
 import Landing from './components/landing'
+import YouTubeVideoPage from './components/videoPage'
 
 export interface User {
     accessToken: string;
@@ -21,10 +22,11 @@ function App() {
                 <BrowserRouter>
                     <Routes>
                         <Route path="/" element={<Landing />} />
-                        <Route path="/home" element={<Home />} />
+                        <Route path="home" element={<Home />} />
                         <Route path="dashboard" element={<Dashboard />} />
                         <Route path="signin" element={<SignInPage />} />
                         <Route path="signup" element={<SignUpPage />} />
+                        <Route path="video/:creatorId/:videoId" element={<YouTubeVideoPage />} />
                     </Routes>
                 </BrowserRouter>
             </UserProvider>

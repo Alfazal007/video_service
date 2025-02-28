@@ -7,7 +7,7 @@ export function Landing() {
     const route = useNavigate();
     useEffect(() => {
         if (!user) {
-            route("/signin");
+            route("/home");
             return;
         }
     }, [user])
@@ -17,4 +17,4 @@ export function Landing() {
     )
 }
 
-export default Landing
+export default Landing;
