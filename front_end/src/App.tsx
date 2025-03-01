@@ -9,6 +9,7 @@ import SignUpPage from './components/signup'
 import UserProvider from './context/UserContext'
 import Landing from './components/landing'
 import YouTubeVideoPage from './components/videoPage'
+import { SearchedVideos } from './components/searchedVideos'
 
 export interface User {
     accessToken: string;
@@ -27,6 +28,7 @@ function App() {
                         <Route path="signin" element={<SignInPage />} />
                         <Route path="signup" element={<SignUpPage />} />
                         <Route path="video/:creatorId/:videoId" element={<YouTubeVideoPage />} />
+                        <Route path="query/:query" element={<SearchedVideos />} />
                     </Routes>
                 </BrowserRouter>
             </UserProvider>
