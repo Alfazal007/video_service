@@ -1,6 +1,7 @@
 import { UserContext } from '../context/UserContext'
 import { useContext, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom';
+import SearchBar from './deeperui/searchbar';
 
 export function Landing() {
     const { user } = useContext(UserContext);
@@ -13,7 +14,7 @@ export function Landing() {
     }, [user])
 
     return (
-        JSON.stringify(user)
+        <SearchBar />
     )
 }
 

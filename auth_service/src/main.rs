@@ -184,7 +184,7 @@ async fn main() -> std::io::Result<()> {
                     routes::elasticsearch_controllers::search_list::search_list_controller,
                 ))
             )
-            .service(web::scope("/api/v1/viewVideo").route(
+            .service(web::scope("/api/v1/viewvideo").route(
                             "/{creator_id}/{video_id}",
                             web::get().to(routes::video_controllers::get_video::get_video)
             ))
