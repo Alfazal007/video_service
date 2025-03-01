@@ -1,6 +1,3 @@
-import { Button } from "../components/ui/button"
-import { Play, Volume2, SkipForward, Maximize } from "lucide-react"
-import { Slider } from "../components/ui/slider"
 import { useEffect, useState } from "react"
 import axios from "axios"
 import { DOMAIN } from "../constants"

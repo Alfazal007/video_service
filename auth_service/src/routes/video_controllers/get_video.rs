@@ -6,7 +6,6 @@ pub async fn get_video(
     app_state: web::Data<AppState>,
     path: web::Path<(i32, i32)>,
 ) -> impl Responder {
-    println!("\n\n\n REQUEST IN  \n\n\n");
     let (creator_id, video_id) = path.to_owned();
     let video_from_db_res =
         sqlx::query_as::<_, VideoModel>
